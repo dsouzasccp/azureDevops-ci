@@ -1,0 +1,28 @@
+pool:
+  name: Pool-Linux
+
+trigger: none
+
+variables:
+  region: 'sa-east-1'
+  environment: 'Prod'
+  cluster: 'ECS-Cluster1'
+
+
+steps:
+- task: AmazonWebServices.aws-vsts-tools.CloudFormationCreateOrUpdateStack.CloudFormationCreateOrUpdateStack@1
+  displayName: 'Create/Update Stack: $(Build.DefinitionName)'
+  inputs:
+    awsCredentials: AWS_AzureDevops
+    regionName: '$(region)'
+    stackName: '$(Build.DefinitionName)'
+    templateFile: servicesECS/template_create_ecs.yml #template cloudformation
+    templateParametersSource: inline
+    templateParameters: |
+     - ParameterKey: ClusterValue
+       ParameterValue: $(cluster)
+     - ParameterKey: EnvironmentValue
+       ParameterValue: $(environment)
+     - ParameterKey: PriorityNumber
+       ParameterValue: '$(Build.BuildId)'
+    disableRollback: true

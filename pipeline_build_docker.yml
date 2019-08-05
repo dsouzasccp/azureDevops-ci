@@ -1,0 +1,39 @@
+pool:
+  name: Pool-Linux
+
+variables:
+  imageName: 'app1'
+  region: 'sa-east-1'
+  repository: 'caminho_repoositorio'
+
+steps:
+- task: Docker@1
+  displayName: 'Build Dockerfile'
+  inputs:
+    containerregistrytype: 'Container Registry'
+    dockerRegistryEndpoint: 'Docker Hub Sifra'
+    dockerFile: '$(repository)/Dockerfile'
+    imageName: '$(imageName):latest'
+
+- task: AmazonWebServices.aws-vsts-tools.ECRPushImage.ECRPushImage@1
+  displayName: 'Push Image: '
+  inputs:
+    awsCredentials: AWS_AzureDevops
+    regionName: '$(region)'
+    sourceImageName: '$(imageName)'
+    repositoryName: '$(imageName)'
+    autoCreateRepository: true
+
+- task: CopyFiles@2
+  displayName: 'Clone Repositório'
+  inputs:
+    SourceFolder: '$(repository)'
+    TargetFolder: '/home/ec2-user/$(Build.DefinitionName)/'
+    CleanTargetFolder: true
+    OverWrite: true
+
+- bash: |
+   #Removing all images from AgentLinuxAWS
+   docker images -q | xargs docker rmi -f
+  workingDirectory: '/home/ec2-user/$(Build.DefinitionName)/'
+  displayName: 'Remover imagens docker'
